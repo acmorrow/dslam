@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Produce a template header file with UUID'ed header guards
+
+guard=$(echo included_$(uuidgen | sed -e "s|-|_|g" | tr '[:upper:]' '[:lower:]'))
+echo \#ifndef $guard
+echo \#define $guard
+
+echo \#endif // $guard
+

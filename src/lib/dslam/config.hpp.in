@@ -1,0 +1,24 @@
+#ifndef included_3f76e36b_6d71_4c2c_b401_2da7753253b2
+#define included_3f76e36b_6d71_4c2c_b401_2da7753253b2
+
+#include <cstddef>
+#include <dslam/export.hpp>
+
+#define LIBDSLAM_VERSION_MAJOR @libdslam_version_major@;
+#define LIBDSLAM_VERSION_MINOR @libdslam_version_minor@;
+#define LIBDSLAM_VERSION_PATCH @libdslam_version_patch@;
+
+namespace dslam {
+
+  const std::size_t LIBDSLAM_EXPORT library_version_major = LIBDSLAM_VERSION_MAJOR;
+  const std::size_t LIBDSLAM_EXPORT library_version_minor = LIBDSLAM_VERSION_MINOR;
+  const std::size_t LIBDSLAM_EXPORT library_version_patch = LIBDSLAM_VERSION_PATCH;
+
+  void LIBDSLAM_EXPORT get_library_version(
+    std::size_t* major = nullptr,
+    std::size_t* minor = nullptr,
+    std::size_t* patch = nullptr);
+
+} // namespace dslam
+
+#endif // included_3f76e36b_6d71_4c2c_b401_2da7753253b2
