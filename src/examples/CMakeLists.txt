@@ -6,5 +6,10 @@ target_link_libraries (nyccpp_meetup_example
   libdslam
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
-
 install (TARGETS nyccpp_meetup_example DESTINATION bin)
+
+add_executable (minimal_example minimal_example.cpp)
+target_link_libraries (minimal_example
+  libdslam
+)
+install (TARGETS minimal_example DESTINATION bin)
