@@ -1,6 +1,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <iostream>
 #include <thread>
 #include <unordered_map>
 
@@ -27,9 +28,8 @@ namespace {
     auto const& get = dslam::predicates::http::verbs::get;
     auto const& post = dslam::predicates::http::verbs::post;
 
-    struct service_state {
-
-      void record_hit(context const& context) {
+    struct hitcounter {
+      void record(context const& context) {
 	++hits[context->request()->getResource()];
       }
 
@@ -39,40 +39,41 @@ namespace {
     };
 
     // NOTE(C++11): make_shared
-    auto state = std::make_shared<service_state>();
-    auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(scheduler.getIOService());
+    auto counter = std::make_shared<hitcounter>();
+    auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(
+      scheduler.getIOService());
 
     return std::unique_ptr<dslam::service>(new dslam::service{
 
       // NOTE(C++11): brace initializers
       // NOTE(C++11): lambdas and captures
-      { true, [state](context const& context) -> result {
-	  state->record_hit(context);
+      { true, [counter](context const& context) -> result {
+	  counter->record(context);
 	  return dslam::next_handler;
       }},
 
-      { "hello", get or post, [state](context const& context) -> result {
+      { "hello", get or post, [](context const& context) -> result {
 	  return "Hello, World!\n";
       }},
 
-      { "hitcounter", get, [state](context const& context) -> result {
+      { "hitcounter", get, [counter](context const& context) -> result {
 	  auto writer = context->writer();
 	  // NOTE(C++11): New style for loop
-	  for (auto const& hit : state->hits)
+	  for (auto const& hit : counter->hits)
 	    writer << hit.first << ": " << hit.second << "\n";
 	  return writer;
       }},
 
       // NOTE(C++11): Built in regular expressions
       // NOTE(C++11): Raw string literals
-      { std::regex(R"(^rtest/(.*)/(.*))"), get, [state](context const& context) -> result {
+      { std::regex(R"(^rtest/(.*)/(.*))"), get, [](context const& context) -> result {
 	  auto writer = context->writer();
 	  writer << "First param: " << context->matches()[1] << "\n";
 	  writer << "Second param: " << context->matches()[2] << "\n";
 	  return writer;
       }},
 
-      { "users/:name", get or post, [state](context const& context) -> result {
+      { "users/:name", get, [](context const& context) -> result {
 	  auto writer = context->writer();
 	  writer->write("Hello, ");
 	  writer->write(context->match("name"));
@@ -82,7 +83,7 @@ namespace {
 
       // NOTE(acm): A misbehaving route that blocks the IO thread. Don't do this!
       // NOTE(C++11): std::chrono, and std::this_thread
-      { "block/:duration", get, [state](context const& context) -> result {
+      { "block/:duration", get, [](context const& context) -> result {
 	  auto const duration = boost::lexical_cast<int>(context->match("duration"));
 	  std::this_thread::sleep_for(std::chrono::seconds(duration));
 	  return "Done sleeping\n";
@@ -90,7 +91,7 @@ namespace {
 
       // NOTE(acm): Instead, do it from a separate thread.
       // NOTE(C++11): Starting a thread with std::thread constructor and a lambda
-      { "block_in_thread/:duration", get, [state](context const& context) -> result {
+      { "block_in_thread/:duration", get, [](context const& context) -> result {
 	  auto task = [context]() {
 	    auto const duration = boost::lexical_cast<int>(context->match("duration"));
 	    std::this_thread::sleep_for(std::chrono::seconds(duration));
@@ -103,7 +104,7 @@ namespace {
 	  return dslam::defer_response;
       }},
 
-      { "block_in_thread2/:duration", get, [state](context const& context) -> result {
+      { "block_in_thread2/:duration", get, [](context const& context) -> result {
 	  context->run_in_thread([context]() -> result {
 	    auto const duration = boost::lexical_cast<int>(context->match("duration"));
 	    std::this_thread::sleep_for(std::chrono::seconds(duration));
@@ -112,7 +113,7 @@ namespace {
 	  return dslam::defer_response;
       }},
 
-      { "chunks", get or post, [state](context const& context) -> result {
+      { "chunks", get, [](context const& context) -> result {
 	  auto writer = context->writer();
 	  writer->write("Some stuff\n");
 	  writer->sendChunk([context](boost::system::error_code const& error, std::size_t written) {

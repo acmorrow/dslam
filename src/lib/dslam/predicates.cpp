@@ -5,8 +5,6 @@
 #include <boost/algorithm/string/join.hpp>
 #include <pion/net/HTTPTypes.hpp>
 
-#include <iostream>
-
 namespace dslam {
   namespace predicates {
 
