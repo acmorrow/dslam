@@ -3,7 +3,7 @@ add_compiler_export_flags()
 
 include (FullRPath)
 
-find_package (Boost 1.50.0 COMPONENTS system)
+find_package (Boost 1.50.0 COMPONENTS system program_options)
 include_directories (${Boost_INCLUDE_DIR})
 
 find_package (Pion)

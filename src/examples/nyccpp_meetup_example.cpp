@@ -1,9 +1,11 @@
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <thread>
 #include <unordered_map>
 
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/program_options.hpp>
 
 #include <pion/net/WebServer.hpp>
 
@@ -148,9 +150,29 @@ int main(int argc, char* argv[]) {
 
   pion::PionLogger::m_priority = pion::PionLogger::LOG_LEVEL_WARN;
 
+  namespace po = boost::program_options;
+  po::options_description options("Allowed options");
+  options.add_options()
+    ("help", "produce help message")
+    ("port", po::value<std::uint16_t>(), "server listen port");
+
+  po::variables_map variables;
+  po::store(po::parse_command_line(argc, argv, options), variables);
+  po::notify(variables);
+
+  if (variables.count("help")) {
+    std::cout << options << "\n";
+    return EXIT_SUCCESS;
+  }
+
+  if (variables.count("port") == 0) {
+    std::cout << "No listen port specified." << "\n" << options << "\n";
+    return EXIT_FAILURE;
+  }
+
+  auto const port = variables["port"].as<std::uint16_t>();
   boost::asio::ip::tcp::endpoint const where(
-    boost::asio::ip::tcp::v4(),
-    atoi(argv[1])); // sue me
+    boost::asio::ip::tcp::v4(), port);
 
   // Explicitly single threaded server
   auto const scheduler = dslam::make_unique<pion::PionOneToOneScheduler>();

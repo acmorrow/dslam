@@ -81,7 +81,20 @@ tried to produce one.
 
 Once cmake generates, a `make all test install` should get you a
 compiled DSLAM if you are using the Unix Makefile generator. If you
-are using something else I presume you know what to do.
+are using something else I presume you know what to do. A sucessful
+build should get you a libdslam.[so|dylib], and a
+nyccpp_meetup_example executable. Run the example program and give it
+a port via the --port argument. It exposes the following routes:
+
+- /api/hello - Replies with the text "Hello, World!\n"
+- /api/hitcounter - Replies with text describing what URLs the server has handled
+- /api/rtest/ARG1/ARG2 - Replies with text describing ARG1 and ARG2
+- /api/users/:name - Replies with "Hello, <name>!\n"
+- /block/:duration - Blocks the server thread for the specified duration, then replies.
+- /block_in_thread/:duration - Like above, but sleeps in another thread to not block the server.
+- /block_in_thread2/:duration - Like above, but different result dispatching mechanism.
+- /chunks - Demonstrates a chunked reply as a buildup to async
+- /resolve/:host - Shows how to interoperate with an async API by demoing boost::asio resolvers.
 
 There are a few unit tests, but mostly just to ensure that google-test
 and CTest are working. I plan to write more that actually test out the
