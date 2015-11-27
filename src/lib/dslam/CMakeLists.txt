@@ -13,7 +13,7 @@ file (GLOB libdslam_headers *.hpp)
 add_library (libdslam ${libdslam_sources})
 
 target_link_libraries (libdslam
-  ${Pion_NET_LIBRARY} ${Pion_COMMON_LIBRARY}
+  ${LIBPION_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   ${OPENSSL_LIBRARIES})
 

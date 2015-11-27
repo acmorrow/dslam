@@ -7,14 +7,14 @@
 
 namespace dslam {
 
-  using pion::net::HTTPRequestPtr;
-  using pion::net::TCPConnectionPtr;
-  using pion::net::HTTPResponseWriter;
-  using pion::net::HTTPResponseWriterPtr;
-  using pion::net::HTTPWriter;
+  using pion::http::request_ptr;
+  using pion::http::response_writer;
+  using pion::http::response_writer_ptr;
+  using pion::http::writer;
+  using pion::tcp::connection_ptr;
 
   namespace {
-    void do_finish(TCPConnectionPtr& connection, boost::system::error_code const& error_code) {
+    void do_finish(connection_ptr& connection, pion::stdx::error_code const& error_code) {
       connection->finish();
     }
   } // namespace
@@ -22,15 +22,15 @@ namespace dslam {
   service::service(std::initializer_list<route> routes)
     : routes_(routes) {}
 
-  void service::operator()(HTTPRequestPtr& request, TCPConnectionPtr& connection) {
+  void service::operator()(const request_ptr& request, const connection_ptr& connection) {
     auto ctx = std::make_shared<context>(*this, request, connection);
     for (auto const& route : routes_)
       if (route.accepts(ctx) and evaluate(route, ctx))
 	return;
 
     // Nothing matched, return a 404.
-    ctx->writer()->getResponse().setStatusCode(pion::net::HTTPTypes::RESPONSE_CODE_NOT_FOUND);
-    ctx->writer()->getResponse().setStatusMessage(pion::net::HTTPTypes::RESPONSE_MESSAGE_NOT_FOUND);
+    ctx->writer()->get_response().set_status_code(pion::http::types::RESPONSE_CODE_NOT_FOUND);
+    ctx->writer()->get_response().set_status_message(pion::http::types::RESPONSE_MESSAGE_NOT_FOUND);
     ctx->writer()->send();
   }
 
@@ -39,14 +39,14 @@ namespace dslam {
   }
 
   service::context::context(class service& service,
-			    HTTPRequestPtr& request,
-			    TCPConnectionPtr& connection)
+			    const request_ptr& request,
+			    const connection_ptr& connection)
     // NOTE(C++11): Brace initializers
     : service_{service}
     , request_{request}
     , connection_{connection}
-    , writer_{HTTPResponseWriter::create(connection_, *request_, std::bind(&do_finish, connection_, std::placeholders::_1))}
-    , resource_{service_.getRelativeResource(request_->getResource())}
+    , writer_{response_writer::create(connection_, *request_, std::bind(&do_finish, connection_, std::placeholders::_1))}
+    , resource_{service_.get_relative_resource(request_->get_resource())}
     , matches_{}
     , match_dictionary_{nullptr} {}
 
@@ -91,7 +91,7 @@ namespace dslam {
 	return true;
       }
 
-      auto operator()(pion::net::HTTPResponseWriterPtr const& writer) const -> bool {
+      auto operator()(pion::http::response_writer_ptr const& writer) const -> bool {
 	// They gave us back a writer, which we assume is properly
 	// configured. We just take care of the call to send for them.
 	writer->send();

@@ -13,11 +13,11 @@
 
 #include <boost/variant/variant.hpp>
 
-#include <pion/net/HTTPResponse.hpp>
-#include <pion/net/HTTPRequest.hpp>
-#include <pion/net/HTTPResponseWriter.hpp>
-#include <pion/net/TCPConnection.hpp>
-#include <pion/net/WebService.hpp>
+#include <pion/http/response.hpp>
+#include <pion/http/request.hpp>
+#include <pion/http/response_writer.hpp>
+#include <pion/tcp/connection.hpp>
+#include <pion/http/plugin_service.hpp>
 
 #include <dslam/composable_predicate.hpp>
 #include <dslam/export.hpp>
@@ -31,7 +31,7 @@ namespace dslam {
     next_handler_tag,
     std::string,
     char const*,
-    pion::net::HTTPResponseWriterPtr>;
+    pion::http::response_writer_ptr>;
 
   LIBDSLAM_EXPORT
   route_result const next_handler = next_handler_tag();
@@ -39,7 +39,7 @@ namespace dslam {
   LIBDSLAM_EXPORT
   route_result const defer_response = boost::blank();
 
-  class LIBDSLAM_EXPORT service : public pion::net::WebService {
+  class LIBDSLAM_EXPORT service : public pion::http::plugin_service {
   public:
 
     class LIBDSLAM_EXPORT context;
@@ -54,7 +54,7 @@ namespace dslam {
     service(std::initializer_list<route> routes);
 
     virtual
-    void operator()(pion::net::HTTPRequestPtr& request, pion::net::TCPConnectionPtr& connection);
+    void operator()(const pion::http::request_ptr& request, const pion::tcp::connection_ptr& connection);
 
   private:
     LIBDSLAM_NO_EXPORT
@@ -71,19 +71,19 @@ namespace dslam {
     using match_dictionary = std::unordered_map<std::string, std::size_t>;
 
     context(class service& service,
-	    pion::net::HTTPRequestPtr& request,
-	    pion::net::TCPConnectionPtr& connection);
+	    const pion::http::request_ptr& request,
+	    const pion::tcp::connection_ptr& connection);
 
     ~context();
 
     auto service() -> class service& { return service_; }
     auto service() const -> class service const& { return service_; }
 
-    auto request() const -> pion::net::HTTPRequestPtr const& { return request_; }
+    auto request() const -> pion::http::request_ptr const& { return request_; }
 
     auto resource() const -> std::string const& { return resource_; }
 
-    auto writer() const -> pion::net::HTTPResponseWriterPtr const& { return writer_; }
+    auto writer() const -> pion::http::response_writer_ptr const& { return writer_; }
 
     auto matches() -> std::smatch& { return matches_; }
     auto matches() const -> std::smatch const& { return matches_; }
@@ -101,9 +101,9 @@ namespace dslam {
 
   private:
     class service& service_;
-    pion::net::HTTPRequestPtr& request_;
-    pion::net::TCPConnectionPtr& connection_;
-    pion::net::HTTPResponseWriterPtr writer_;
+    const pion::http::request_ptr& request_;
+    const pion::tcp::connection_ptr& connection_;
+    pion::http::response_writer_ptr writer_;
     std::string resource_;
     std::smatch matches_;
     match_dictionary const* match_dictionary_;

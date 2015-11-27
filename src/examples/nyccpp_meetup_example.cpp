@@ -8,7 +8,8 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/program_options.hpp>
 
-#include <pion/net/WebServer.hpp>
+#include <pion/http/plugin_server.hpp>
+#include <pion/logger.hpp>
 
 #include <dslam/make_unique.hpp>
 #include <dslam/predicates.hpp>
@@ -18,7 +19,7 @@ namespace {
 
   // NOTE(C++11): New style function signature
   // NOTE(C++11): unique_ptr
-  auto make_service(pion::PionScheduler& scheduler) -> std::unique_ptr<dslam::service> {
+  auto make_service(pion::scheduler& scheduler) -> std::unique_ptr<dslam::service> {
 
     // NOTE(C++11): New style typdefs.
     using context = dslam::service::context_ptr;
@@ -30,7 +31,7 @@ namespace {
 
     struct hitcounter {
       void record(context const& context) {
-	++hits[context->request()->getResource()];
+	++hits[context->request()->get_resource()];
       }
 
       // NOTE(C++11): unordered_map
@@ -40,8 +41,8 @@ namespace {
 
     // NOTE(C++11): make_shared
     auto counter = std::make_shared<hitcounter>();
-    auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(
-      scheduler.getIOService());
+    auto resolver = std::make_shared<pion::stdx::asio::ip::tcp::resolver>(
+      scheduler.get_io_service());
 
     return std::unique_ptr<dslam::service>(new dslam::service{
 
@@ -116,10 +117,10 @@ namespace {
       { "chunks", get, [](context const& context) -> result {
 	  auto writer = context->writer();
 	  writer->write("Some stuff\n");
-	  writer->sendChunk([context](boost::system::error_code const& error, std::size_t written) {
+	  writer->send_chunk([context](pion::stdx::error_code const& error, std::size_t written) {
 	    context->writer()->clear();
 	    context->writer()->write("More stuff!\n");
-	    context->writer()->sendFinalChunk();
+	    context->writer()->send_final_chunk();
 	  });
 
 	  return dslam::defer_response;
@@ -129,10 +130,10 @@ namespace {
 	  const std::string host = context->match("host");
 	  context->writer() << "Resolving " << host << "\n";
           resolver->async_resolve(host, [context](
-	    boost::system::error_code const& err,
-	    boost::asio::ip::tcp::resolver::iterator endpoint) {
+            pion::stdx::error_code const& err,
+	    pion::stdx::asio::ip::tcp::resolver::iterator endpoint) {
 
-	      const boost::asio::ip::tcp::resolver::iterator done;
+              const pion::stdx::asio::ip::tcp::resolver::iterator done;
 	      while (endpoint != done) {
 		context->writer() << endpoint->endpoint() << "\n";
 		++endpoint;
@@ -149,7 +150,7 @@ namespace {
 
 int main(int argc, char* argv[]) {
 
-  pion::PionLogger::m_priority = pion::PionLogger::LOG_LEVEL_WARN;
+    //pion::logger::m_priority = pion::logger::LOG_LEVEL_WARN;
 
   namespace po = boost::program_options;
   po::options_description options("Allowed options");
@@ -172,17 +173,17 @@ int main(int argc, char* argv[]) {
   }
 
   auto const port = variables["port"].as<std::uint16_t>();
-  boost::asio::ip::tcp::endpoint const where(
-    boost::asio::ip::tcp::v4(), port);
+  pion::stdx::asio::ip::tcp::endpoint const where(
+    pion::stdx::asio::ip::tcp::v4(), port);
 
   // Explicitly single threaded server
-  auto const scheduler = dslam::make_unique<pion::PionOneToOneScheduler>();
-  scheduler->setNumThreads(1);
+  auto const scheduler = dslam::make_unique<pion::one_to_one_scheduler>();
+  scheduler->set_num_threads(1);
 
-  auto const server = dslam::make_unique<pion::net::WebServer>(*scheduler, where);
+  auto const server = dslam::make_unique<pion::http::plugin_server>(*scheduler, where);
 
   auto const service = make_service(*scheduler);
-  server->addService("/api", service.get());
+  server->add_service("/api", service.get());
   server->start();
 
   pause();

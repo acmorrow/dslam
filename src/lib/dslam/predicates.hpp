@@ -4,7 +4,7 @@
 #include <regex>
 #include <string>
 
-#include <pion/net/HTTPTypes.hpp>
+#include <pion/http/types.hpp>
 
 #include <dslam/export.hpp>
 #include <dslam/service.hpp>
@@ -16,12 +16,12 @@ namespace dslam {
       namespace verbs {
 	LIBDSLAM_EXPORT
         service::predicate const get([](service::context_ptr const& context) {
-	  return context->request()->getMethod() == pion::net::HTTPTypes::REQUEST_METHOD_GET;
+          return context->request()->get_method() == pion::http::types::REQUEST_METHOD_GET;
 	});
 
 	LIBDSLAM_EXPORT
 	service::predicate const post([](service::context_ptr const& context) {
-	  return context->request()->getMethod() == pion::net::HTTPTypes::REQUEST_METHOD_POST;
+          return context->request()->get_method() == pion::http::types::REQUEST_METHOD_POST;
 	});
       } // namespace verbs
     } // namespace http

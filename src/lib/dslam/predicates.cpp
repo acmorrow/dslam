@@ -3,7 +3,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
-#include <pion/net/HTTPTypes.hpp>
+#include <pion/http/types.hpp>
 
 namespace dslam {
   namespace predicates {

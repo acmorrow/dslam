@@ -25,22 +25,22 @@ does lead to interesting looking code.
 
 If you want to build DSLAM, there are several annoying prerequisites:
 
-- A working C++11 compiler. Also, a unicorn. (j/k. I'm actually really
-  impressed with how far along GCC and clang are w.r.t C++11 support,
-  especially when compared to how long it took to get real world
-  compilers to support C++98 after that standard was released).
+- A working C++11 compiler.
 
 - Boost 1.50.0 or greater, plus the fix for
   https://svn.boost.org/trac/boost/ticket/2792 if it is not fixed in
   your boost version. You will want to compile boost with
   -std=c++11.
 
-- My C++11 port of the PION network library. You can get it from the
-  c++11-port branch of my [github fork of
-  PION](https://github.com/acmorrow/pion-core/tree/c++11-port). You
+- My C++11 port of the PION network library, built against the
+  standalone ASIO library. You can get it from the standalone branch
+  of my
+  [github fork of PION](https://github.com/acmorrow/pion/tree/standalone). You
   will also need any dependencies of PION, which is mostly boost. You
   will need to configure it with -std=c++11 in the CXXFLAGS for it to
   build.
+
+- The standalone ASIO library
 
 - google-test, again compiled with -std=c++11. At least for me, with
   clang -std=c++11 I needed to give it -DGTEST_HAS_TR1_TUPLE=0
